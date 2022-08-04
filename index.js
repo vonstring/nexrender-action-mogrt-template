@@ -38,9 +38,19 @@ module.exports = async (job, settings, options, type) => {
         }    
         
         const mogrt = new StreamZip.async({ file: job.template.dest });
+        mogrt.on('error', err => {
+            console.error(err);
+            throw Error('[action-mogrt-template] ERROR - could not extract .mogrt file');
+        });
         await mogrt.extract(null, job.workpath);
+        mogrt.close();
 
-        const manifest = JSON.parse(await fs.readFile(path.join(job.workpath, 'definition.json')));
+        try {
+            const manifest = JSON.parse(await fs.readFile(path.join(job.workpath, 'definition.json')));
+        } catch (err) {
+            throw Error('[action-mogrt-template] ERROR - not a valid .mogrt file') 
+        }
+
         const sourceInfo = Object.values(manifest.sourceInfoLocalized)[0];
         const compName = sourceInfo.name;
 
@@ -58,6 +68,7 @@ module.exports = async (job, settings, options, type) => {
             }
         })
         await aegraphic.extract(null, job.workpath);
+        aegraphic.close();
 
         if(!template){
             return reject(`[${job.uid}] [action-mogrt-template] ERROR - no AE file found in the .mogrt (extension .aep)`);
