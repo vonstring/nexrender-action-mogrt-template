@@ -25,34 +25,27 @@ module.exports = async (job, settings, options, type) => {
         if (!job.actions.prerender) {
             job.actions.prerender = [];
         }
-        job.actions.prerender.push(Object.assign({
-            module:__filename,
+        job.actions.prerender.push({...options,
+            module: __filename,
             automaticallyAdded: true
-        }, options));
+        });
         job.template.composition = '__mogrt__';
         return job;
     } else if (type === 'prerender' && options.automaticallyAdded) {
-        if(path.extname(job.template.dest).toLowerCase() != ".mogrt"){
+        if(path.extname(job.template.dest).toLowerCase() !== ".mogrt"){
             settings.logger.log(`[${job.uid}] [action-mogrt-template] skipping - template file should have .mogrt extension`);
             return job;
         }    
-        
-        const mogrt = new StreamZip.async({ file: job.template.dest });
-        mogrt.on('error', err => {
-            console.error(err);
-            throw Error('[action-mogrt-template] ERROR - could not extract .mogrt file');
-        });
-        await mogrt.extract(null, job.workpath);
-        mogrt.close();
 
-        try {
-            const manifest = JSON.parse(await fs.readFile(path.join(job.workpath, 'definition.json')));
-        } catch (err) {
-            throw Error('[action-mogrt-template] ERROR - not a valid .mogrt file') 
+        const { Mogrt } = await import('mogrt');
+        const mogrt = new Mogrt(job.template.dest);
+        await mogrt.init();
+
+        if (!mogrt.isAfterEffects()) {
+            throw Error('[action-mogrt-template] ERROR - .mogrt was not made with After Effects');
         }
-
-        const sourceInfo = Object.values(manifest.sourceInfoLocalized)[0];
-        const compName = sourceInfo.name;
+        const manifest = await mogrt.getManifest();
+        const compName = manifest.sourceInfoLocalized.en_US.name;
 
         const asset = job.assets.find(a => a.src === jsxUrl);
         asset.parameters.push({
@@ -60,24 +53,15 @@ module.exports = async (job, settings, options, type) => {
             value: compName
         });
         
-        let aegraphic = new StreamZip.async({ file: path.join(job.workpath, 'project.aegraphic') });
-        let template;
-        aegraphic.on('entry', entry => {
-            if (!template && entry.name.toLocaleLowerCase().endsWith('aep')) {
-                template = entry;
-            }
-        })
-        await aegraphic.extract(null, job.workpath);
-        aegraphic.close();
-
-        if(!template){
-            return reject(`[${job.uid}] [action-mogrt-template] ERROR - no AE file found in the .mogrt (extension .aep)`);
+        const filenames = await mogrt.extractTo(job.workpath);
+        const template = filenames.find(fn => path.extname(fn).toLowerCase() === '.aep');
+        if (!template) {
+            throw Error(`[${job.uid}] [action-mogrt-template] ERROR - no AE file found in the .mogrt (extension .aep)`);
         }
-        let newPath = path.normalize(`${job.workpath}/${template.name}`)
 
-        settings.logger.log(`[${job.uid}] [action-mogrt-template] setting new template path to: ${newPath}`);
+        settings.logger.log(`[${job.uid}] [action-mogrt-template] setting new template path to: ${template}`);
 
-        job.template.dest = newPath;
+        job.template.dest = template;
         job.template.extension = "aep";
         return job;
     } else {
