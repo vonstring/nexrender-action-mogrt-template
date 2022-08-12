@@ -1,10 +1,10 @@
-# nexrender-action-template-unzip
+# nexrender-action-mogrt-template
 
 This plugin adds .mogrt support to Nexrender.
 
 ## Install
 
-`npm install nexrender-action-template-unzip`
+`npm install nexrender-action-mogrt-template`
 
 ## How to use
 
