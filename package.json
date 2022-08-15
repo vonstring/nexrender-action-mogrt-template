@@ -1,6 +1,6 @@
 {
   "name": "nexrender-action-mogrt-template",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "MOGRT support for Nexrender",
   "main": "index.js",
   "scripts": {
