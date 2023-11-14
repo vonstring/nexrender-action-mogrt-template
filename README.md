@@ -12,7 +12,6 @@ This plugin adds .mogrt support to Nexrender.
 2. Add this module in predownload actions
 3. Add any Essential Graphics parameters you want to change as `essentialParameters`
 
-
 ```json
 {
     "template": {
@@ -25,6 +24,7 @@ This plugin adds .mogrt support to Nexrender.
                 "module": "nexrender-action-mogrt-template",
                 "essentialParameters": {
                     "Title": "This should be the title",
+                    "Image": "file:///path/to/image.png",
                     "Dropdown": 2,
                     "Scale": [50, 50],
                     "Checkbox": true,
@@ -35,13 +35,15 @@ This plugin adds .mogrt support to Nexrender.
                     "Scale": [50, 50]
                 }
             }
-        ],
-
+        ]
+    }
+}
 ```
 
 ## Notes
 
-* Any `template.src` without a .mogrt extension will be ignored
-* The value in `template.composition` will be ignored, as .mogrt files specify what composition to use on their own, but Nexrender requires one to be specified
-* Media replacement through essential graphics isn't supported (yet), but normal asset injection with Nexrender will work
-* Invalid .mogrt files will cause an error
+-   Any `template.src` without a .mogrt extension will be ignored
+-   The value in `template.composition` will be ignored, as .mogrt files specify what composition to use on their own, but Nexrender requires one to be specified
+-   Like Nexrender, Medias are expected to use the file Url format.
+-   Invalid .mogrt files will cause an error
+
